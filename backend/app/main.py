@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
 from app.models import *
-from app.routers import auth, core, admin
+from app.routers import auth, core, admin, tickets
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,6 +16,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Movie Ticket Booking API", description="Production-grade movie ticket booking system", version="2.0.0", lifespan=lifespan, docs_url="/docs", redoc_url="/redoc")
     app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
     app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+    app.include_router(tickets.router, tags=["Tickets"])
     app.include_router(core.router, tags=["Core"])
     app.include_router(admin.router, tags=["Admin"])
     return app

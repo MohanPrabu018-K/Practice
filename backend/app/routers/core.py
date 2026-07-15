@@ -13,6 +13,7 @@ from app.models.seat import Seat, SeatCategory
 from app.models.review import Review
 from app.models.user import User
 from app.models.booking import Booking, BookingSeat
+from app.models.coupon import Coupon
 from app.dependencies import get_current_user, get_admin_user, get_optional_user
 from app.utils.security import generate_booking_reference, create_access_token
 from app.utils.pagination import Paginator

@@ -35,6 +35,10 @@ export const createBooking = d => api.post('/bookings', d).then(r => r.data)
 export const fetchBooking = ref => api.get(`/bookings/${ref}`).then(r => r.data)
 export const fetchMyBookings = p => api.get('/users/me/bookings', { params: p }).then(r => r.data)
 
+// Tickets (QR + PDF)
+export const fetchBookingQR = ref => api.get(`/bookings/${ref}/qr`).then(r => r.data)
+export const getTicketPdfUrl = ref => `${api.defaults.baseURL}/bookings/${ref}/pdf?token=${localStorage.getItem('token')}`
+
 // Coupons
 export const validateCoupon = d => api.post('/coupons/validate', d).then(r => r.data)
 
