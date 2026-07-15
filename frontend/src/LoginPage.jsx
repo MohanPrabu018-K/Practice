@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { loginUser } from './api'
+import { login } from './api'
+import { useAuth } from './store'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -8,28 +9,18 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const auth = useAuth()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-
-    if (!username.trim() || !password.trim()) {
-      setError('Please fill in all fields.')
-      return
-    }
-
+  const handleSubmit = async e => {
+    e.preventDefault(); setError('')
+    if (!username.trim() || !password.trim()) return setError('Fill all fields')
     setLoading(true)
     try {
-      const result = await loginUser({ username, password })
-      localStorage.setItem('token', result.access_token)
-      localStorage.setItem('user', JSON.stringify({ username: result.username, email: result.email }))
+      const r = await login({ username, password })
+      auth.login(r.access_token, { username: r.username, email: r.email, role: r.role })
       navigate('/')
-      window.location.reload() // refresh header
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed.')
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(err.response?.data?.detail || 'Login failed') }
+    finally { setLoading(false) }
   }
 
   return (
@@ -37,30 +28,13 @@ export default function LoginPage() {
       <div className="auth-card">
         <h2>Login</h2>
         <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoFocus
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} autoFocus />
+          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
           {error && <p className="error">{error}</p>}
-          <button className="btn-primary btn-large" type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
+          <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
         </form>
-        <p className="auth-switch">
-          Don't have an account? <Link to="/register">Register</Link>
-        </p>
-        <p className="demo-hint">
-          Demo: <strong>demo</strong> / <strong>demo123</strong>
-        </p>
+        <p className="auth-switch">No account? <Link to="/register">Register</Link></p>
+        <p className="demo-hint">Demo: <strong>demo</strong> / <strong>demo123</strong></p>
       </div>
     </div>
   )

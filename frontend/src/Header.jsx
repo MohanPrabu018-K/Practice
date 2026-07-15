@@ -1,38 +1,24 @@
-import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth, useTheme } from './store'
 
 export default function Header() {
-  const [user, setUser] = useState(null)
+  const { user, logout } = useAuth()
+  const { dark, toggle } = useTheme()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      setUser(JSON.parse(stored))
-    }
-  }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setUser(null)
-    navigate('/')
-  }
+  const handleLogout = () => { logout(); navigate('/') }
 
   return (
     <header className="header">
-      <Link to="/" className="logo">
-        🎬 MovieBooker
-      </Link>
+      <Link to="/" className="logo">🎬 MovieBooker</Link>
       <nav>
         <Link to="/">Movies</Link>
         {user ? (
           <>
-            <span className="user-greeting">👤 {user.username}</span>
             <Link to="/my-bookings">My Bookings</Link>
-            <button className="btn-logout" onClick={handleLogout}>
-              Logout
-            </button>
+            {user.role === 'admin' && <Link to="/admin">Admin</Link>}
+            <Link to="/profile">👤 {user.username}</Link>
+            <button onClick={handleLogout} className="btn-logout">Logout</button>
           </>
         ) : (
           <>
@@ -40,6 +26,7 @@ export default function Header() {
             <Link to="/register">Register</Link>
           </>
         )}
+        <button onClick={toggle} className="theme-btn" title="Toggle theme">{dark ? '☀️' : '🌙'}</button>
       </nav>
     </header>
   )
