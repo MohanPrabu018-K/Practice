@@ -36,6 +36,8 @@ class MovieOut(BaseModel):
     duration: Optional[int] = None; language: Optional[str] = None
     release_date: Optional[datetime] = None; is_upcoming: bool = False
     average_rating: float = 0.0; total_reviews: int = 0
+    trailer_url: Optional[str] = None; cast_crew: Optional[dict] = None
+    is_wishlisted: bool = False
     model_config = {"from_attributes": True}
 
 class MovieDetailOut(MovieOut):

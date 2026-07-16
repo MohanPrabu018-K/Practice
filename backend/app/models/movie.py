@@ -1,5 +1,5 @@
 """Movie model with ratings, trending, and upcoming support."""
-from sqlalchemy import Column, Integer, String, Text, Float, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Text, Float, Boolean, DateTime, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -14,12 +14,16 @@ class Movie(Base):
     description = Column(Text)
     poster_url = Column(String(500))
     genre = Column(String(100))
-    duration = Column(Integer)  # minutes
+    duration = Column(Integer)
     language = Column(String(100))
     release_date = Column(DateTime)
     is_upcoming = Column(Boolean, default=False)
     average_rating = Column(Float, default=0.0)
     total_reviews = Column(Integer, default=0)
+    trailer_url = Column(String(500), nullable=True)
+    cast_crew = Column(JSON, nullable=True)  # {"director":"...", "cast":["..."]}
+    is_blocked = Column(Boolean, default=False)
 
     show_timings = relationship("ShowTiming", back_populates="movie")
     reviews = relationship("Review", back_populates="movie")
+    wishlists = relationship("Wishlist", back_populates="movie", cascade="all, delete-orphan")

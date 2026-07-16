@@ -39,6 +39,17 @@ export const fetchMyBookings = p => api.get('/users/me/bookings', { params: p })
 export const fetchBookingQR = ref => api.get(`/bookings/${ref}/qr`).then(r => r.data)
 export const getTicketPdfUrl = ref => `${api.defaults.baseURL}/bookings/${ref}/pdf?token=${localStorage.getItem('token')}`
 
+// Wishlist
+export const fetchWishlist = () => api.get('/wishlist').then(r => r.data)
+export const addToWishlist = mid => api.post(`/wishlist/${mid}`)
+export const removeFromWishlist = mid => api.delete(`/wishlist/${mid}`)
+
+// Cancellation
+export const cancelBooking = ref => api.post(`/bookings/${ref}/cancel`).then(r => r.data)
+
+// Mock Payment
+export const mockPayment = () => api.post('/mock-payment').then(r => r.data)
+
 // Coupons
 export const validateCoupon = d => api.post('/coupons/validate', d).then(r => r.data)
 
@@ -56,9 +67,10 @@ export const createScreen = d => api.post('/admin/screens', d)
 export const deleteScreen = id => api.delete(`/admin/screens/${id}`)
 export const createShow = d => api.post('/admin/shows', d)
 export const fetchAdminBookings = p => api.get('/admin/bookings', { params: p }).then(r => r.data)
-export const cancelBooking = id => api.put(`/admin/bookings/${id}/cancel`)
+export const adminCancelBooking = id => api.put(`/admin/bookings/${id}/cancel`)
 export const fetchAdminUsers = p => api.get('/admin/users', { params: p }).then(r => r.data)
 export const updateUserRole = (id, d) => api.put(`/admin/users/${id}/role`, d)
+export const blockUser = (id, blocked) => api.put(`/admin/users/${id}/role`, { is_blocked: blocked })
 export const deleteUser = id => api.delete(`/admin/users/${id}`)
 export const fetchAdminCoupons = () => api.get('/admin/coupons').then(r => r.data)
 export const createCoupon = d => api.post('/admin/coupons', d)

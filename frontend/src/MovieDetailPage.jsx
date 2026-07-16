@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchMovie, fetchReviews, addReview } from './api'
+import { fetchMovie, fetchReviews, addReview, addToWishlist, removeFromWishlist, fetchWishlist } from './api'
 import { useAuth } from './store'
 
 export default function MovieDetailPage() {
@@ -13,19 +13,30 @@ export default function MovieDetailPage() {
   const [comment, setComment] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [wishlistIds, setWishlistIds] = useState([])
+  const [showTrailer, setShowTrailer] = useState(false)
 
   useEffect(() => {
     setLoading(true)
     Promise.all([fetchMovie(id), fetchReviews(id, { page: 1, limit: 10 })]).then(([m, r]) => { setMovie(m); setReviews(r) }).catch(console.error).finally(() => setLoading(false))
   }, [id])
 
+  useEffect(() => {
+    if (user) fetchWishlist().then(items => setWishlistIds(items.map(w => w.movie.id))).catch(() => {})
+  }, [user])
+
+  const isWishlisted = wishlistIds.includes(parseInt(id))
+  const toggleWishlist = async () => {
+    try {
+      if (isWishlisted) { await removeFromWishlist(id); setWishlistIds(p => p.filter(x => x !== parseInt(id))) }
+      else { await addToWishlist(id); setWishlistIds(p => [...p, parseInt(id)]) }
+    } catch (e) { console.error(e) }
+  }
+
   const handleReview = async () => {
     setSubmitting(true)
-    try {
-      await addReview(id, { rating, comment })
-      const r = await fetchReviews(id, { page: 1, limit: 10 })
-      setReviews(r); setComment('')
-    } catch (e) { console.error(e) }
+    try { await addReview(id, { rating, comment }); const r = await fetchReviews(id, { page: 1, limit: 10 }); setReviews(r); setComment('') }
+    catch (e) { console.error(e) }
     finally { setSubmitting(false) }
   }
 
@@ -35,7 +46,9 @@ export default function MovieDetailPage() {
   return (
     <div className="page">
       <div className="movie-detail">
-        <div className="detail-poster">{movie.poster_url ? <img src={movie.poster_url} alt={movie.title} /> : <div className="no-poster large">🎬</div>}</div>
+        <div className="detail-poster">
+          {movie.poster_url ? <img src={movie.poster_url} alt={movie.title} /> : <div className="no-poster large">🎬</div>}
+        </div>
         <div className="detail-info">
           <h2>{movie.title}</h2>
           <div className="detail-meta">
@@ -45,8 +58,39 @@ export default function MovieDetailPage() {
             {movie.average_rating > 0 && <span className="rating">★ {movie.average_rating} ({movie.total_reviews} reviews)</span>}
           </div>
           <p className="description">{movie.description}</p>
+
+          {movie.cast_crew && (
+            <div style={{ marginTop: 16, padding: 16, background: '#1a1a2e', borderRadius: 10 }}>
+              <strong style={{ color: '#e0aaff' }}>Director:</strong> <span style={{ color: '#aab' }}>{movie.cast_crew.director}</span>
+              <div style={{ marginTop: 8 }}><strong style={{ color: '#e0aaff' }}>Cast:</strong> <span style={{ color: '#aab' }}>{(movie.cast_crew.cast || []).join(', ')}</span></div>
+            </div>
+          )}
+
+          <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {movie.trailer_url && (
+              <button className="btn btn-outline btn-sm" onClick={() => setShowTrailer(true)}>▶ Watch Trailer</button>
+            )}
+            {user && (
+              <button className="btn btn-outline btn-sm" onClick={toggleWishlist}>
+                {isWishlisted ? '❤️ Remove from Wishlist' : '🤍 Add to Wishlist'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {showTrailer && movie.trailer_url && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <h3>Trailer</h3>
+            <button onClick={() => setShowTrailer(false)} style={{ background: 'none', border: 'none', color: '#ef5350', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+          </div>
+          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+            <iframe src={movie.trailer_url} title="Trailer" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', borderRadius: 12 }} allowFullScreen />
+          </div>
+        </div>
+      )}
+
       <h3>Show Timings</h3>
       {!movie.show_timings?.length ? <p className="empty">No shows available.</p> : (
         <div className="show-list">{movie.show_timings.map(t => (
@@ -56,6 +100,7 @@ export default function MovieDetailPage() {
           </div>
         ))}</div>
       )}
+
       <div className="review-section">
         <h3>Reviews ({reviews.total})</h3>
         {user && (

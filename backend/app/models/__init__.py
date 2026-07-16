@@ -8,6 +8,7 @@ from app.models.seat import Seat, SeatCategory
 from app.models.booking import Booking, BookingSeat
 from app.models.review import Review
 from app.models.coupon import Coupon
+from app.models.wishlist import Wishlist
 from app.models.payment import Payment, Refund
 from app.models.refresh_token import RefreshToken
 

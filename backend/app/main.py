@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
 from app.models import *
-from app.routers import auth, core, admin, tickets
+from app.routers import auth, core, admin, tickets, extras
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +19,7 @@ def create_app() -> FastAPI:
     app.include_router(tickets.router, tags=["Tickets"])
     app.include_router(core.router, tags=["Core"])
     app.include_router(admin.router, tags=["Admin"])
+    app.include_router(extras.router, tags=["Extras"])
     return app
 
 app = create_app()

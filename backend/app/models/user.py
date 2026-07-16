@@ -1,5 +1,5 @@
 """User model with role-based access."""
-from sqlalchemy import Column, Integer, String, Enum as SAEnum
+from sqlalchemy import Column, Integer, String, Boolean, Enum as SAEnum
 from sqlalchemy.orm import relationship
 import enum
 
@@ -21,6 +21,7 @@ class User(Base):
     role = Column(String(20), default=UserRole.USER.value, nullable=False)
     phone = Column(String(20), nullable=True)
     avatar_url = Column(String(500), nullable=True)
+    is_blocked = Column(Boolean, default=False)
 
     bookings = relationship("Booking", back_populates="user")
     reviews = relationship("Review", back_populates="user")
