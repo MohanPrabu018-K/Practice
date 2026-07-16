@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+"""Tickets router — QR codes and PDF downloads with dual auth."""
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from fastapi.responses import Response
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
@@ -15,19 +16,21 @@ from app.services.ticket_service import generate_qr_base64, generate_ticket_pdf
 router = APIRouter(prefix="/api", tags=["Tickets"])
 
 
-def _resolve_user(header_token: str | None, query_token: str | None, db: Session) -> User:
-    """Resolve user from Authorization header or ?token= query param."""
-    token = header_token or query_token
+def _resolve_user(auth_header: str | None, query_token: str | None, db: Session) -> User:
+    token = None
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.replace("Bearer ", "")
+    elif query_token:
+        token = query_token
     if not token:
         raise HTTPException(401, "Authentication required")
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         user = db.get(User, payload.get("sub"))
-        if not user:
-            raise HTTPException(401, "User not found")
+        if not user: raise HTTPException(401, "User not found")
         return user
     except jwt.PyJWTError:
-        raise HTTPException(401, "Invalid token")
+        raise HTTPException(401, "Invalid or expired token")
 
 
 @router.get("/bookings/{ref}/qr")
@@ -35,10 +38,9 @@ def booking_qr(
     ref: str,
     token: str | None = Query(None),
     db: Session = Depends(get_db),
-    authorization: str | None = None,
+    authorization: str | None = Header(None),
 ):
-    header_token = authorization.replace("Bearer ", "") if authorization and authorization.startswith("Bearer ") else None
-    user = _resolve_user(header_token, token, db)
+    user = _resolve_user(authorization, token, db)
     b = db.execute(select(Booking).options(joinedload(Booking.seats)).where(Booking.booking_reference == ref)).unique().scalar_one_or_none()
     if not b or b.user_id != user.id:
         raise HTTPException(403, "Access denied")
@@ -51,10 +53,9 @@ def booking_pdf(
     ref: str,
     token: str | None = Query(None),
     db: Session = Depends(get_db),
-    authorization: str | None = None,
+    authorization: str | None = Header(None),
 ):
-    header_token = authorization.replace("Bearer ", "") if authorization and authorization.startswith("Bearer ") else None
-    user = _resolve_user(header_token, token, db)
+    user = _resolve_user(authorization, token, db)
     b = db.execute(select(Booking).options(joinedload(Booking.seats)).where(Booking.booking_reference == ref)).unique().scalar_one_or_none()
     if not b or b.user_id != user.id:
         raise HTTPException(403, "Access denied")

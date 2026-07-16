@@ -80,7 +80,16 @@ def update_movie(mid: int, data: dict, db: Session = Depends(get_db), _=Depends(
 
 @router.delete("/movies/{mid}")
 def delete_movie(mid: int, db: Session = Depends(get_db), _=Depends(get_admin_user)):
-    db.delete(db.get(Movie, mid)); db.commit(); return {"ok": True}
+    movie = db.get(Movie, mid)
+    if not movie: raise HTTPException(404)
+    # Delete child show_timings + seats first
+    for show in movie.show_timings:
+        for seat in show.seats:
+            db.delete(seat)
+        db.delete(show)
+    db.delete(movie)
+    db.commit()
+    return {"ok": True}
 
 # ── Theatres CRUD ───────────────────────────────────
 
